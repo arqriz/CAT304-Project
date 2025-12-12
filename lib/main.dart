@@ -4,7 +4,20 @@ import 'pages/login_page.dart';
 import 'pages/register_page.dart';
 import 'pages/dashboard_page.dart';
 
-void main() {
+// 🔴 ADD THESE TWO IMPORTS
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; 
+
+// 🔴 MODIFY THE main() FUNCTION AS BELOW
+void main() async { 
+  // 1. Ensure Flutter is initialized before calling Firebase
+  WidgetsFlutterBinding.ensureInitialized(); 
+  
+  // 2. Initialize Firebase using the generated configuration
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
   runApp(const MyApp());
 }
 
