@@ -1,3 +1,5 @@
+// lib/pages/onboarding_page.dart
+
 import 'package:flutter/material.dart';
 
 class OnboardingPage extends StatelessWidget {
@@ -6,184 +8,57 @@ class OnboardingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFD7DCC3),
-      body: SafeArea(
+      body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              color: const Color(0xFF556B2F),
-              borderRadius: BorderRadius.circular(40),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                children: [
-                  const SizedBox(height: 60),
-
-                  // App Title
-                  const Text(
-                    "REGEN",
-                    style: TextStyle(
-                      fontSize: 48,
-                      letterSpacing: 4.0,
-                      color: Color(0xFFF6F2DD),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    "Gamified Recycling System",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFFF6F2DD),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Planet Image (Using Icon instead of Image.asset)
-                  Container(
-                    height: 230,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      color: const Color(0xFF7A8F5A),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.recycling,
-                        size: 120,
-                        color: Colors.white.withOpacity(0.8), // Fixed here
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // Hero Text
-                  Column(
-                    children: const [
-                      Text(
-                        "SAVE",
-                        style: TextStyle(
-                          fontSize: 58,
-                          color: Color(0xFFF6F2DD),
-                          fontWeight: FontWeight.w900,
-                          height: 0.9,
-                        ),
-                      ),
-                      Text(
-                        "THE",
-                        style: TextStyle(
-                          fontSize: 58,
-                          color: Color(0xFFF6F2DD),
-                          fontWeight: FontWeight.w900,
-                          height: 0.9,
-                        ),
-                      ),
-                      Text(
-                        "PLANET",
-                        style: TextStyle(
-                          fontSize: 58,
-                          color: Color(0xFFF6F2DD),
-                          fontWeight: FontWeight.w900,
-                          height: 0.9,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Subtitle
-                  const Text(
-                    "Recycle. Compete. Earn Rewards.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFFF6F2DD),
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // USM Tagline
-                  Text(
-                    "Universiti Sains Malaysia",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: const Color(0xFFF6F2DD).withOpacity(0.8), // Fixed here
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Get Started Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 62,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/login');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF6F2DD),
-                        foregroundColor: const Color(0xFF556B2F),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 4,
-                        shadowColor: Colors.black.withOpacity(0.2),
-                      ),
-                      child: const Text(
-                        "Get Started",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Don't have account link
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/register');
-                    },
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.all(12),
-                    ),
-                    child: const Text(
-                      "Don't have an account? Sign Up",
-                      style: TextStyle(
-                        color: Color(0xFFF6F2DD),
-                        fontSize: 16,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // Footer
-                  Text(
-                    "Supporting USM's Green Campus Initiative",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: const Color(0xFFF6F2DD).withOpacity(0.6), // Fixed here
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-                ],
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.eco_rounded, 
+                size: 100, 
+                color: Theme.of(context).primaryColor
               ),
-            ),
+              const SizedBox(height: 24),
+              const Text(
+                'REGEN: Gamified Recycling',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF556B2F),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Turn your recycling into points, ranks, and rewards to create a greener USM campus!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF7A8F5A),
+                ),
+              ),
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/register');
+                  },
+                  child: const Text('Get Started'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pushNamed('/login');
+                },
+                child: Text(
+                  'Already have an account? Login',
+                  style: TextStyle(color: Theme.of(context).primaryColor),
+                ),
+              ),
+            ],
           ),
         ),
       ),

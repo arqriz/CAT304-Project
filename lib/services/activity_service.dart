@@ -1,110 +1,97 @@
+// lib/services/activity_service.dart
+
+import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import '../models/activity_model.dart';
 
 class ActivityService {
-  final List<RecyclingActivity> _activities = [
-    RecyclingActivity(
-      id: '1',
-      userId: '123456',
-      type: 'plastic',
-      weight: 2.5,
-      pointsEarned: 50,
-      location: 'Library Recycling Center',
-      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-    RecyclingActivity(
-      id: '2',
-      userId: '123456',
-      type: 'mixed',
-      weight: 5.0,
-      pointsEarned: 100,
-      location: 'Campus Clean-up Event',
-      timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      eventId: 'event1',
-    ),
-    RecyclingActivity(
-      id: '3',
-      userId: '123456',
-      type: 'paper',
-      weight: 3.0,
-      pointsEarned: 30,
-      location: 'Faculty of Computer Sciences',
-      timestamp: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-  ];
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  final List<SustainabilityEvent> _events = [
-    SustainabilityEvent(
-      id: 'event1',
-      title: 'Campus Clean-up Day',
-      description: 'Join us for a campus-wide clean-up event',
-      date: DateTime.now().add(const Duration(days: 3)),
-      location: 'USM Main Campus',
-      organizer: 'Kampus Sejahtera',
-      pointsReward: 100,
-      qrCode: 'EVENT123456',
-      maxParticipants: 100,
-      currentParticipants: 45,
-    ),
-    SustainabilityEvent(
-      id: 'event2',
-      title: 'E-Waste Collection Drive',
-      description: 'Proper disposal of electronic waste',
-      date: DateTime.now().add(const Duration(days: 7)),
-      location: 'DKP Lobby',
-      organizer: 'School of Computer Sciences',
-      pointsReward: 150,
-      qrCode: 'EVENT789012',
-      maxParticipants: 50,
-      currentParticipants: 22,
-    ),
-  ];
+  // --- Gamification Engine & Impact Simulation Logic ---
+  Map<String, double> _getImpactAndPoints(String type, double quantity) {
+    int points = 0;
+    double co2Saved = 0.0;
+    double recycledWeight = 0.0;
 
-  List<RecyclingActivity> getUserActivities(String userId) {
-    return _activities.where((activity) => activity.userId == userId).toList();
-  }
+    // Implementation based on simple rule-based logic (can be expanded later)
+    if (type == 'Plastic Bottles') {
+      points = (quantity * 10).toInt(); // 10 points per bottle
+      co2Saved = quantity * 0.08; 
+      recycledWeight = quantity * 0.02; // Avg bottle weight 0.02 kg
+    } else if (type == 'Paper (kg)') {
+      points = (quantity * 5).toInt(); // 5 points per kg
+      co2Saved = quantity * 1.7; // High CO2 savings for paper
+      recycledWeight = quantity;
+    } else if (type == 'Aluminium Cans') {
+      points = (quantity * 20).toInt(); // 20 points per can
+      co2Saved = quantity * 0.15; 
+      recycledWeight = quantity * 0.015; // Avg can weight 0.015 kg
+    } 
+    // Event Participation logic would be handled by QR Scan
 
-  List<SustainabilityEvent> getUpcomingEvents() {
-    return _events.where((event) => event.date.isAfter(DateTime.now())).toList();
-  }
-
-  Future<RecyclingActivity> logActivity({
-    required String userId,
-    required String type,
-    required double weight,
-    required String location,
-    String? qrCode,
-    String? eventId,
-  }) async {
-    // Calculate points based on weight and type
-    int points = calculatePoints(type, weight);
-    
-    final activity = RecyclingActivity(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userId: userId,
-      type: type,
-      weight: weight,
-      pointsEarned: points,
-      location: location,
-      timestamp: DateTime.now(),
-      qrCode: qrCode,
-      eventId: eventId,
-    );
-    
-    _activities.add(activity);
-    return activity;
-  }
-
-  int calculatePoints(String type, double weight) {
-    const Map<String, int> pointMultipliers = {
-      'plastic': 20,
-      'paper': 10,
-      'metal': 15,
-      'glass': 12,
-      'e-waste': 30,
-      'mixed': 8,
+    return {
+      'points': points.toDouble(),
+      'co2Saved': co2Saved,
+      'recycledWeight': recycledWeight,
     };
-    
-    final multiplier = pointMultipliers[type] ?? 10;
-    return (weight * multiplier).toInt();
+  }
+
+  // --- Record Activity and Update User Profile using Firestore Transaction ---
+  Future<void> recordActivity(String type, double quantity, String unit) async {
+    final user = fb_auth.FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception("User not authenticated.");
+    }
+
+    final impact = _getImpactAndPoints(type, quantity);
+    final pointsEarned = impact['points']!.toInt();
+    final co2Impact = impact['co2Saved']!;
+    final recycledWeight = impact['recycledWeight']!;
+
+    final newActivity = Activity(
+      id: '', 
+      userId: user.uid,
+      timestamp: DateTime.now(),
+      type: type,
+      quantity: quantity,
+      unit: unit,
+      pointsEarned: pointsEarned,
+      co2Impact: co2Impact,
+    );
+
+    // Use a Firestore transaction for atomic updates to ensure data integrity
+    await _firestore.runTransaction((transaction) async {
+      final userRef = _firestore.collection('users').doc(user.uid);
+      final activityRef = _firestore.collection('activities').doc();
+
+      final userDoc = await transaction.get(userRef);
+      if (!userDoc.exists) {
+        throw Exception("User profile missing in Firestore!");
+      }
+
+      // Calculate new user stats
+      final currentPoints = (userDoc.data()?['points'] ?? 0) as int;
+      final currentRecycled = (userDoc.data()?['totalRecycled'] ?? 0.0).toDouble();
+      final currentCo2 = (userDoc.data()?['co2Saved'] ?? 0.0).toDouble();
+      
+      final newPoints = currentPoints + pointsEarned;
+      final newRecycled = currentRecycled + recycledWeight;
+      final newCo2 = currentCo2 + co2Impact;
+      
+      // TODO: Implement actual Level and Rank calculation based on newPoints here
+
+      // 1. Update the user's document with new totals (Simulation & Analytics)
+      transaction.update(userRef, {
+        'points': newPoints,
+        'totalRecycled': newRecycled,
+        'co2Saved': newCo2,
+        'level': 1, 
+        'rank': 'N/A', 
+      });
+
+      // 2. Commit the new activity record
+      transaction.set(activityRef, newActivity.toMap());
+    });
   }
 }

@@ -1,4 +1,8 @@
+// lib/pages/login_page.dart
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/auth_service.dart'; // Import the service
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,6 +16,70 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  // State variable to manage loading and UI visibility
+  bool _isLoading = false; 
+
+  // --- UPDATED LOGIN LOGIC ---
+  Future<void> _performLogin(BuildContext context) async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    
+    // 1. Start loading state
+    setState(() {
+      _isLoading = true;
+    });
+
+    // We no longer need the separate showDialog, we use the _isLoading state 
+    // to control the button's appearance and block input.
+    
+    final authService = Provider.of<AuthService>(context, listen: false);
+    
+    try {
+      // 2. Call the real Firebase service
+      final success = await authService.login(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+
+      // 3. Handle result
+      if (mounted) {
+        if (success) {
+          // If successful, navigate to the main route ('/') which the StreamBuilder 
+          // in main.dart handles by redirecting to Dashboard.
+          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        } else {
+          // Show error message on failure
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Login failed. Check credentials or contact administrator."),
+              backgroundColor: Colors.red,
+            ),
+          );
+          // 4. End loading state on failure
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("An error occurred: ${e.toString()}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+    // Note: The loading state is only ended on failure or error. 
+    // On success, the widget is replaced, making setState unnecessary.
+  }
+  // --- END UPDATED LOGIN LOGIC ---
+
 
   @override
   Widget build(BuildContext context) {
@@ -93,109 +161,62 @@ class _LoginPageState extends State<LoginPage> {
                         key: _formKey,
                         child: Column(
                           children: [
-                            // Email Field
-                            Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF6F2DD),
-                                borderRadius: BorderRadius.circular(18),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.1),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
+                            // Email Field (Use original styling with InputDecorationTheme)
+                            TextFormField(
+                              controller: _emailController,
+                              decoration: const InputDecoration(
+                                labelText: "Email",
+                                prefixIcon: Icon(Icons.email_outlined),
                               ),
-                              child: TextFormField(
-                                controller: _emailController,
-                                decoration: const InputDecoration(
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 18,
-                                  ),
-                                  border: InputBorder.none,
-                                  labelText: "Email",
-                                  labelStyle: TextStyle(color: Color(0xFF7A8F5A)),
-                                  prefixIcon: Icon(
-                                    Icons.email_outlined,
-                                    color: Color(0xFF556B2F),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.transparent,
-                                ),
-                                keyboardType: TextInputType.emailAddress,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your email';
-                                  }
-                                  if (!value.contains('@') || !value.contains('.')) {
-                                    return 'Please enter a valid email';
-                                  }
-                                  if (!value.endsWith('@student.usm.my') && 
-                                      !value.endsWith('@usm.my')) {
-                                    return 'Please use USM email address';
-                                  }
-                                  return null;
-                                },
-                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your email';
+                                }
+                                if (!value.contains('@') || !value.contains('.')) {
+                                  return 'Please enter a valid email';
+                                }
+                                // Validation specific to USM domain
+                                if (!value.endsWith('@student.usm.my') && 
+                                    !value.endsWith('@usm.my')) {
+                                  return 'Please use USM email address';
+                                }
+                                return null;
+                              },
                             ),
 
                             const SizedBox(height: 20),
 
-                            // Password Field
-                            Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF6F2DD),
-                                borderRadius: BorderRadius.circular(18),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.1),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
+                            // Password Field (Use original styling with InputDecorationTheme)
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: _obscurePassword,
+                              decoration: InputDecoration(
+                                labelText: "Password",
+                                prefixIcon: const Icon(Icons.lock_outline),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    color: const Color(0xFF556B2F),
                                   ),
-                                ],
-                              ),
-                              child: TextFormField(
-                                controller: _passwordController,
-                                obscureText: _obscurePassword,
-                                decoration: InputDecoration(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 18,
-                                  ),
-                                  border: InputBorder.none,
-                                  labelText: "Password",
-                                  labelStyle: const TextStyle(color: Color(0xFF7A8F5A)),
-                                  prefixIcon: const Icon(
-                                    Icons.lock_outline,
-                                    color: Color(0xFF556B2F),
-                                  ),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscurePassword
-                                          ? Icons.visibility_off
-                                          : Icons.visibility,
-                                      color: const Color(0xFF556B2F),
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _obscurePassword = !_obscurePassword;
-                                      });
-                                    },
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.transparent,
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
                                 ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your password';
-                                  }
-                                  if (value.length < 6) {
-                                    return 'Password must be at least 6 characters';
-                                  }
-                                  return null;
-                                },
                               ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your password';
+                                }
+                                if (value.length < 6) {
+                                  return 'Password must be at least 6 characters';
+                                }
+                                return null;
+                              },
                             ),
 
                             const SizedBox(height: 20),
@@ -205,7 +226,6 @@ class _LoginPageState extends State<LoginPage> {
                               alignment: Alignment.centerRight,
                               child: TextButton(
                                 onPressed: () {
-                                  // Handle forgot password
                                   _showForgotPasswordDialog(context);
                                 },
                                 child: const Text(
@@ -225,11 +245,7 @@ class _LoginPageState extends State<LoginPage> {
                               width: double.infinity,
                               height: 60,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    _performLogin(context);
-                                  }
-                                },
+                                onPressed: _isLoading ? null : () => _performLogin(context), // Disable button when loading
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF556B2F),
                                   foregroundColor: const Color(0xFFF6F2DD),
@@ -238,13 +254,22 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   elevation: 4,
                                 ),
-                                child: const Text(
-                                  "Login",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 3,
+                                        ),
+                                      )
+                                    : const Text(
+                                        "Login",
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
                               ),
                             ),
 
@@ -347,28 +372,9 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _performLogin(BuildContext context) {
-    // Show loading indicator
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF556B2F),
-        ),
-      ),
-    );
-
-    // Simulate API call
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pop(context); // Remove loading indicator
-      
-      // For demo purposes, accept any valid USM email
-      Navigator.pushReplacementNamed(context, '/dashboard');
-    });
-  }
-
   void _showForgotPasswordDialog(BuildContext context) {
+    // This dialog is kept separate for simplicity, but you would implement 
+    // a Firebase call to sendPasswordResetEmail here.
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
