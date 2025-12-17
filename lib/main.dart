@@ -4,25 +4,17 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'firebase_options.dart';
 
-// Import Pages
+// Pages
+import 'pages/dashboard_page.dart';
 import 'pages/onboarding_page.dart';
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
-import 'pages/dashboard_page.dart';
 import 'pages/log_activity_page.dart';
-// import 'pages/scan_qr_page.dart'; // NEW: Required for the QR scanner
-
-// Import Services
 import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Firebase core
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(
     ChangeNotifierProvider(
       create: (context) => AuthService(),
@@ -36,65 +28,78 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Definining our specific Moss Green Palette
+    const Color mossGreen = Color(0xFF5B6739);
+    const Color lightSage = Color(0xFFDDE2C9);
+    const Color creamWhite = Color(0xFFF9F9F0);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'REGEN - Gamified Recycling',
+      title: 'REGEN',
       theme: ThemeData(
-        primaryColor: const Color(0xFF556B2F),
-        colorScheme: const ColorScheme.light(
-          primary: Color(0xFF556B2F),
-          secondary: Color(0xFFDAA520),
+        useMaterial3: true,
+        primaryColor: mossGreen,
+        
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: mossGreen,
+          primary: mossGreen,
+          secondary: const Color(0xFF94A684),
+          surface: creamWhite,
+          onSurface: mossGreen,
         ),
-        scaffoldBackgroundColor: const Color(0xFFF6F2DD),
-        fontFamily: 'Roboto',
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF556B2F),
-          foregroundColor: Colors.white,
-          centerTitle: true,
-          elevation: 2,
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFFF6F2DD),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+        
+        scaffoldBackgroundColor: lightSage,
+
+        // Corrected: CardThemeData instead of CardTheme 
+        cardTheme: CardThemeData(
+          color: creamWhite,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         ),
+
+        textTheme: const TextTheme(
+          displayLarge: TextStyle(color: mossGreen, fontWeight: FontWeight.bold),
+          titleLarge: TextStyle(color: mossGreen, fontWeight: FontWeight.bold),
+          bodyLarge: TextStyle(color: mossGreen),
+        ),
+
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF556B2F),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: creamWhite,
+            foregroundColor: mossGreen,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
             textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
         ),
       ),
       
-      // Auto-detect login state
+      // Auth State Check
       home: StreamBuilder<fb_auth.User?>(
         stream: fb_auth.FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            return const Scaffold(
+              backgroundColor: lightSage,
+              body: Center(child: CircularProgressIndicator(color: mossGreen)),
+            );
           }
-          // If session exists, bypass login
-          if (snapshot.hasData) {
-            return const DashboardPage();
-          }
-          return const OnboardingPage();
+          // Returns Onboarding if not logged in, Dashboard if they are
+          return snapshot.hasData ? const DashboardPage() : const OnboardingPage();
         },
       ),
       
-      // Named Routes for clear navigation
+      // Route Definitions
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/dashboard': (context) => const DashboardPage(),
         '/log_activity': (context) => const LogActivityPage(),
-        //'/scan_qr': (context) => const ScanQRPage(), // NEW: Linked to center FAB (just to test out on web)
       },
     );
   }

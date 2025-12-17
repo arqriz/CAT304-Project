@@ -1,5 +1,3 @@
-// lib/pages/onboarding_page.dart
-
 import 'package:flutter/material.dart';
 
 class OnboardingPage extends StatelessWidget {
@@ -7,57 +5,71 @@ class OnboardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Colors to match your theme
+    const Color mossGreen = Color(0xFF5B6739);
+    const Color creamWhite = Color(0xFFF9F9F0);
+
     return Scaffold(
-      body: Center(
+      backgroundColor: mossGreen, // Full-screen green background
+      body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.eco_rounded, 
-                size: 100, 
-                color: Theme.of(context).primaryColor
+              const Spacer(flex: 2),
+              
+              // 1. Eco Leaves Icon/Logo
+              const Icon(
+                Icons.eco_rounded,
+                color: creamWhite,
+                size: 80,
               ),
-              const SizedBox(height: 24),
+              
+              const SizedBox(height: 20),
+
+              // 2. Main Title
               const Text(
-                'REGEN: Gamified Recycling',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF556B2F),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Turn your recycling into points, ranks, and rewards to create a greener USM campus!',
+                'SAVE\nTHE\nPLANET',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF7A8F5A),
+                  color: creamWhite,
+                  fontSize: 48,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2.0,
+                  height: 1.1,
                 ),
               ),
-              const SizedBox(height: 40),
+
+              const Spacer(flex: 3),
+
+              // 3. Start Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).pushNamed('/register');
+                    // Navigate to Login or Dashboard
+                    Navigator.pushNamed(context, '/login');
                   },
-                  child: const Text('Get Started'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: creamWhite,
+                    foregroundColor: mossGreen,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  child: const Text(
+                    'Start',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamed('/login');
-                },
-                child: Text(
-                  'Already have an account? Login',
-                  style: TextStyle(color: Theme.of(context).primaryColor),
-                ),
-              ),
+              
+              const SizedBox(height: 20),
             ],
           ),
         ),

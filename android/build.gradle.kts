@@ -22,13 +22,17 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
-// Force namespace for older plugins like qr_code_scanner
+/// android/build.gradle.kts
+
 subprojects {
-    afterEvaluate { project ->
-        if (project.hasProperty('android')) {
-            project.android {
+    afterEvaluate {
+        if (hasProperty("android")) {
+            // We use 'configure' on the "android" extension to access its properties
+            configure<com.android.build.gradle.BaseExtension> {
+                // If the namespace is not set, we assign the project group as the namespace
+                // Note: Older AGP versions use 'namespace' as a simple property
                 if (namespace == null) {
-                    namespace project.group
+                    namespace = project.group.toString()
                 }
             }
         }
