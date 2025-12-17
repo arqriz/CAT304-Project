@@ -43,12 +43,12 @@ class RewardsPage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    const Color(0xFF556B2F),
-                    const Color(0xFF7A8F5A),
+                    Color(0xFF556B2F),
+                    Color(0xFF7A8F5A),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(20),
