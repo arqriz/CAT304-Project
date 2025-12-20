@@ -1,5 +1,3 @@
-// lib/models/activity_model.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Activity {
@@ -23,13 +21,13 @@ class Activity {
     required this.co2Impact,
   });
 
-  // Factory to create an Activity from a Firestore DocumentSnapshot
   factory Activity.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Activity(
       id: doc.id,
       userId: data['userId'] ?? '',
-      timestamp: (data['timestamp'] as Timestamp).toDate(),
+      // Safe fallback for null or pending server timestamps
+      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       type: data['type'] ?? 'Unknown',
       quantity: (data['quantity'] ?? 0.0).toDouble(),
       unit: data['unit'] ?? 'units',
@@ -38,7 +36,6 @@ class Activity {
     );
   }
 
-  // Convert Activity object to a map for Firestore upload
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,

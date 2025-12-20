@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import '../models/user_model.dart';
 import '../models/activity_model.dart';
+import '../services/activity_service.dart'; //
 
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
@@ -15,6 +16,7 @@ class HomeTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final uid = fb_auth.FirebaseAuth.instance.currentUser?.uid;
+    final ActivityService activityService = ActivityService(); // Initialize Service
 
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
@@ -36,7 +38,7 @@ class HomeTab extends StatelessWidget {
               // 1. TOP CURVED HEADER
               _buildModernHeader(user),
 
-              // 2. DIGITAL TREE (NEW PROGRESS SECTION)
+              // 2. DIGITAL TREE (PROGRESS SECTION)
               _buildSectionHeader("Your Digital Tree"),
               _buildDigitalTree(user.points),
 
@@ -71,9 +73,9 @@ class HomeTab extends StatelessWidget {
                 ),
               ),
 
-              // 5. RECENT ACTIVITIES
+              // 5. RECENT ACTIVITIES (Refactored to use ActivityService)
               _buildSectionHeader("Recent Activities"),
-              _buildRecentActivitiesList(uid!),
+              _buildRecentActivitiesList(activityService), //
 
               const SizedBox(height: 120), // Padding for Floating Nav Bar
             ],
@@ -136,7 +138,7 @@ class HomeTab extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
-                    value: (points % 500) / 500, // Show progress to next 500pt milestone
+                    value: (points % 500) / 500,
                     backgroundColor: lightSage,
                     color: mossGreen,
                     minHeight: 8,
@@ -150,7 +152,7 @@ class HomeTab extends StatelessWidget {
     );
   }
 
-  // --- EXISTING UI HELPER METHODS ---
+  // --- UI HELPER METHODS ---
 
   Widget _buildSectionHeader(String title) {
     return Padding(
@@ -243,27 +245,25 @@ class HomeTab extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentActivitiesList(String userId) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('activities')
-          .where('userId', isEqualTo: userId)
-          .orderBy('timestamp', descending: true)
-          .limit(3)
-      .snapshots(),
+  // UPDATED: Uses ActivityService and Activity Model
+  Widget _buildRecentActivitiesList(ActivityService activityService) {
+    return StreamBuilder<List<Activity>>(
+      stream: activityService.getUserActivities(), //
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Padding(
             padding: EdgeInsets.only(left: 25),
             child: Text("No activities yet.", style: TextStyle(color: Colors.grey)),
           );
         }
 
+        // Only show the 3 most recent activities on the Home tab
+        final recentActivities = snapshot.data!.take(3).toList(); //
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 25),
           child: Column(
-            children: snapshot.data!.docs.map((doc) {
-              final activity = Activity.fromFirestore(doc);
+            children: recentActivities.map((activity) {
               return _buildActivityItem(activity);
             }).toList(),
           ),

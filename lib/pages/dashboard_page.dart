@@ -3,7 +3,8 @@ import 'home_tab.dart';
 import 'activities_tab.dart';
 import 'leaderboard_page.dart';
 import 'profile_tab.dart';
-// import 'rewards_tab.dart'; // Commented out to prevent import errors if not created yet
+import 'rewards_tab.dart'; //
+import 'log_activity_page.dart'; //
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -16,7 +17,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   final List<Widget> _tabs = [
     const HomeTab(),
-    const Center(child: Text("Rewards Coming Soon")), // Placeholder for RewardsTab
+    const RewardsTab(), // Updated from placeholder to actual tab
     const ActivitiesTab(),
     const LeaderboardPage(),
     const ProfileTab(),
@@ -31,7 +32,7 @@ class _DashboardPageState extends State<DashboardPage> {
       body: IndexedStack(index: _selectedIndex, children: _tabs),
       bottomNavigationBar: Container(
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-        height: 85, // INCREASED from 75 to 85 to fix the overflow error
+        height: 85, 
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(35),
@@ -66,15 +67,16 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        // DISABLED QR SCANNER: Commented out navigation to prevent crashes
+        // Updated to navigate to LogActivityPage
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("QR Scanner is disabled on this emulator.")),
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const LogActivityPage()),
           );
         },
-        backgroundColor: Colors.grey, // Changed color to grey to show it is disabled
+        backgroundColor: mossGreen, // Re-enabled with theme color
         shape: const CircleBorder(),
-        child: const Icon(Icons.qr_code_scanner, color: Colors.white),
+        child: const Icon(Icons.add, color: Colors.white), // Changed icon to 'add'
       ),
     );
   }

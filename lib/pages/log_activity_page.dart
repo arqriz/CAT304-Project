@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import '../services/activity_service.dart';
 
 class LogActivityPage extends StatefulWidget {
   const LogActivityPage({super.key});
@@ -11,42 +10,40 @@ class LogActivityPage extends StatefulWidget {
 
 class _LogActivityPageState extends State<LogActivityPage> {
   final _formKey = GlobalKey<FormState>();
+  final ActivityService _activityService = ActivityService();
+  
   String _selectedType = 'Plastic';
   final TextEditingController _quantityController = TextEditingController();
   bool _isSubmitting = false;
 
-  // FIXED: Changed to static const 
   static const Color mossGreen = Color(0xFF5B6739);
   static const Color lightSage = Color(0xFFDDE2C9);
   static const Color creamWhite = Color(0xFFF9F9F0);
 
-  final List<String> _categories = ['Plastic', 'Paper', 'Glass', 'Metal', 'Organic'];
+  // Added new items for testing and stimulation
+  final List<String> _categories = [
+    'Plastic', 
+    'Paper', 
+    'Glass', 
+    'Metal', 
+    'Organic',
+    'E-waste',
+    'Textiles'
+  ];
 
   Future<void> _submitActivity() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
 
     try {
-      final user = fb_auth.FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-
       final double quantity = double.parse(_quantityController.text);
-      final int points = (quantity * 10).toInt();
-
-      await FirebaseFirestore.instance.collection('activities').add({
-        'userId': user.uid,
-        'type': _selectedType,
-        'quantity': quantity,
-        'unit': 'kg',
-        'pointsEarned': points,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-        'points': FieldValue.increment(points),
-        'totalRecycled': FieldValue.increment(quantity),
-        'co2Saved': FieldValue.increment(quantity * 0.5),
-      });
+      
+      // Use recordActivity to log data and update user points
+      await _activityService.recordActivity(
+        _selectedType, 
+        quantity, 
+        'kg',
+      );
 
       if (mounted) {
         Navigator.pop(context);
@@ -55,9 +52,11 @@ class _LogActivityPageState extends State<LogActivityPage> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -80,7 +79,6 @@ class _LogActivityPageState extends State<LogActivityPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // FIXED: Removed 'const' before TextStyle because mossGreen is a variable
               const Text(
                 "What did you recycle?",
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: mossGreen),
@@ -99,7 +97,6 @@ class _LogActivityPageState extends State<LogActivityPage> {
                     items: _categories.map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
-                        // FIXED: Removed 'const' here
                         child: Text(value, style: const TextStyle(color: mossGreen)),
                       );
                     }).toList(),
@@ -108,7 +105,6 @@ class _LogActivityPageState extends State<LogActivityPage> {
                 ),
               ),
               const SizedBox(height: 25),
-              // FIXED: Removed 'const' here
               const Text(
                 "Quantity (kg)",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: mossGreen),
@@ -143,7 +139,11 @@ class _LogActivityPageState extends State<LogActivityPage> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                   ),
                   child: _isSubmitting
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
                       : const Text("Log Activity"),
                 ),
               ),
