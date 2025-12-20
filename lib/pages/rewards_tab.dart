@@ -64,8 +64,8 @@ class RewardsTab extends StatelessWidget {
                           margin: const EdgeInsets.only(bottom: 15),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                           child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: const Color(0xFFDDE2C9),
+                            leading: const CircleAvatar(
+                              backgroundColor: Color(0xFFDDE2C9),
                               child: Icon(Icons.redeem, color: mossGreen),
                             ),
                             title: Text(reward.title, style: const TextStyle(fontWeight: FontWeight.bold)),
