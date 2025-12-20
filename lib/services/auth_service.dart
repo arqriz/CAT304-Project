@@ -14,17 +14,19 @@ class AuthService with ChangeNotifier {
   User? get currentUser => _currentUser;
   bool get isAuthenticated => _isAuthenticated;
 
-  // NEW: Constructor calls init to check login status on app startup
+  // Constructor calls init to check login status on app startup
   AuthService() {
     _init();
   }
 
-  // NEW: Automatically detects if a user is already logged in
+  // Automatically detects if a user is already logged in
   void _init() {
     _auth.authStateChanges().listen((fb_auth.User? fbUser) async {
       if (fbUser != null) {
+        // User is logged into Firebase Auth
         await _fetchAndSetUser(fbUser.uid);
       } else {
+        // User is logged out
         _currentUser = null;
         _isAuthenticated = false;
         notifyListeners();
@@ -32,19 +34,27 @@ class AuthService with ChangeNotifier {
     });
   }
 
+  // UPDATED: Prevents black screen loops by allowing login even if profile fails
   Future<void> _fetchAndSetUser(String uid) async {
     try {
-      final doc = await _firestore.collection('users').doc(uid).get();
+      final doc = await _firestore.collection('users').doc(uid).get()
+          .timeout(const Duration(seconds: 10));
+      
       if (doc.exists) {
         _currentUser = User.fromFirestore(doc);
         _isAuthenticated = true;
       } else {
+        // FIX: If Auth is logged in but doc is missing, stay on Dashboard
+        // so the user isn't stuck on a black screen
         _currentUser = null;
-        _isAuthenticated = false;
+        _isAuthenticated = true; 
+        if (kDebugMode) print('Warning: No Firestore document for user $uid');
       }
       notifyListeners();
     } catch (e) {
       if (kDebugMode) print('Fetch User Error: $e');
+      _isAuthenticated = true; // Keep app stable during error
+      notifyListeners();
     }
   }
 
@@ -54,17 +64,14 @@ class AuthService with ChangeNotifier {
         email: email,
         password: password,
       );
-      if (userCredential.user != null) {
-        // _init() will handle fetching the user data via authStateChanges
-        return true;
-      }
-      return false;
+      return userCredential.user != null;
     } on fb_auth.FirebaseAuthException catch (e) {
       if (kDebugMode) print('Login Error: ${e.code}');
       return false;
     }
   }
 
+  // UPDATED: Added safety timeout for registration
   Future<bool> register(String name, String email, String password, 
                         String matricNo, String faculty, String college) async {
     try {
@@ -91,8 +98,9 @@ class AuthService with ChangeNotifier {
           joinDate: DateTime.now(),
         );
 
-        // Ensure the document is written to Firestore
-        await _firestore.collection('users').doc(uid).set(newUser.toMap());
+        // Save to Firestore with a timeout to prevent long loading
+        await _firestore.collection('users').doc(uid).set(newUser.toMap())
+            .timeout(const Duration(seconds: 10));
         
         _currentUser = newUser;
         _isAuthenticated = true;
@@ -103,11 +111,13 @@ class AuthService with ChangeNotifier {
     } on fb_auth.FirebaseAuthException catch (e) {
       if (kDebugMode) print('Registration Error: ${e.code}');
       return false;
+    } catch (e) {
+      if (kDebugMode) print('Unexpected Error: $e');
+      return false;
     }
   }
 
   void logout() async {
     await _auth.signOut();
-    // _init() will automatically clear _currentUser and _isAuthenticated
   }
 }

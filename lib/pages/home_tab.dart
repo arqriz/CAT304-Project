@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:intl/intl.dart';
 import '../models/user_model.dart';
 import '../models/activity_model.dart';
 
@@ -37,7 +36,11 @@ class HomeTab extends StatelessWidget {
               // 1. TOP CURVED HEADER
               _buildModernHeader(user),
 
-              // 2. POPULAR THEMES
+              // 2. DIGITAL TREE (NEW PROGRESS SECTION)
+              _buildSectionHeader("Your Digital Tree"),
+              _buildDigitalTree(user.points),
+
+              // 3. POPULAR THEMES
               _buildSectionHeader("Popular themes"),
               SizedBox(
                 height: 160,
@@ -51,7 +54,7 @@ class HomeTab extends StatelessWidget {
                 ),
               ),
 
-              // 3. STATS GRID (YOUR IMPACT)
+              // 4. STATS GRID (YOUR IMPACT)
               _buildSectionHeader("Your Impact"),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -68,7 +71,7 @@ class HomeTab extends StatelessWidget {
                 ),
               ),
 
-              // 4. RECENT ACTIVITIES (NEW SECTION)
+              // 5. RECENT ACTIVITIES
               _buildSectionHeader("Recent Activities"),
               _buildRecentActivitiesList(uid!),
 
@@ -80,7 +83,74 @@ class HomeTab extends StatelessWidget {
     );
   }
 
-  // --- UI HELPER METHODS ---
+  // --- DIGITAL TREE LOGIC ---
+  Widget _buildDigitalTree(int points) {
+    IconData treeIcon;
+    String stageName;
+    double iconSize;
+    Color treeColor;
+
+    if (points < 100) {
+      treeIcon = Icons.fiber_manual_record; // Seed
+      stageName = "Seed Stage";
+      iconSize = 40;
+      treeColor = Colors.brown;
+    } else if (points < 500) {
+      treeIcon = Icons.spa; // Sprout
+      stageName = "Sprouting Stage";
+      iconSize = 60;
+      treeColor = Colors.greenAccent;
+    } else if (points < 1000) {
+      treeIcon = Icons.grass; // Sapling
+      stageName = "Sapling Stage";
+      iconSize = 80;
+      treeColor = Colors.green;
+    } else {
+      treeIcon = Icons.park; // Mature Tree
+      stageName = "Mature Forest Tree";
+      iconSize = 100;
+      treeColor = mossGreen;
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 25),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: creamWhite,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Row(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(seconds: 1),
+            child: Icon(treeIcon, size: iconSize, color: treeColor),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Impact Progress", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(stageName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: mossGreen)),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: (points % 500) / 500, // Show progress to next 500pt milestone
+                    backgroundColor: lightSage,
+                    color: mossGreen,
+                    minHeight: 8,
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  // --- EXISTING UI HELPER METHODS ---
 
   Widget _buildSectionHeader(String title) {
     return Padding(
@@ -173,15 +243,14 @@ class HomeTab extends StatelessWidget {
     );
   }
 
-  // REAL-TIME ACTIVITY LIST
   Widget _buildRecentActivitiesList(String userId) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('activities')
           .where('userId', isEqualTo: userId)
           .orderBy('timestamp', descending: true)
-          .limit(3) // Only show the last 3 on the Home Page
-          .snapshots(),
+          .limit(3)
+      .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Padding(

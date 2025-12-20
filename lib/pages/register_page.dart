@@ -46,8 +46,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (mounted) {
         if (success) {
-          // Navigate to the main route, which leads to the Dashboard
-          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+          // SUCCESS: REMOVED manual Navigator call.
+          // The StreamBuilder in main.dart is listening to authStateChanges()
+          // and will automatically swap this screen for the DashboardPage.
         } else {
           // If the Firebase call failed (e.g., email already in use)
           ScaffoldMessenger.of(context).showSnackBar(
@@ -80,6 +81,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    const Color mossGreen = Color(0xFF556B2F);
+
     return Scaffold(
       backgroundColor: const Color(0xFFD7DCC3),
       body: SafeArea(
@@ -111,11 +114,11 @@ class _RegisterPageState extends State<RegisterPage> {
                         height: 100,
                         width: 100,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF556B2F).withOpacity(0.1),
+                          color: mossGreen.withOpacity(0.1),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF556B2F).withOpacity(0.2),
+                              color: mossGreen.withOpacity(0.2),
                               blurRadius: 10,
                               offset: const Offset(0, 5),
                             ),
@@ -124,7 +127,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: const Icon(
                           Icons.eco_rounded,
                           size: 50,
-                          color: Color(0xFF556B2F),
+                          color: mossGreen,
                         ),
                       ),
 
@@ -135,7 +138,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         "Join REGEN",
                         style: TextStyle(
                           fontSize: 36,
-                          color: Color(0xFF556B2F),
+                          color: mossGreen,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -183,7 +186,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                    color: const Color(0xFF556B2F),
+                                    color: mossGreen,
                                   ),
                                   onPressed: () {
                                     setState(() {
@@ -203,7 +206,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               child: ElevatedButton(
                                 onPressed: _isLoading ? null : _performRegister,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF556B2F),
+                                  backgroundColor: mossGreen,
                                   foregroundColor: const Color(0xFFF6F2DD),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(18),
@@ -248,7 +251,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   child: const Text(
                                     "Login",
                                     style: TextStyle(
-                                      color: Color(0xFF556B2F),
+                                      color: mossGreen,
                                       fontWeight: FontWeight.bold,
                                       decoration: TextDecoration.underline,
                                     ),
@@ -270,13 +273,13 @@ class _RegisterPageState extends State<RegisterPage> {
                                   Icon(
                                     Icons.arrow_back,
                                     size: 16,
-                                    color: Color(0xFF556B2F),
+                                    color: mossGreen,
                                   ),
                                   SizedBox(width: 8),
                                   Text(
                                     "Back to Home",
                                     style: TextStyle(
-                                      color: Color(0xFF556B2F),
+                                      color: mossGreen,
                                     ),
                                   ),
                                 ],
@@ -303,16 +306,18 @@ class _RegisterPageState extends State<RegisterPage> {
     String label, 
     IconData icon, 
     {TextInputType keyboardType = TextInputType.text, bool obscureText = false, Widget? suffixIcon, String? Function(String?)? validator}) {
+    const Color mossGreen = Color(0xFF556B2F);
+    
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: Color(0xFF7A8F5A)),
-        prefixIcon: Icon(icon, color: const Color(0xFF556B2F)),
+        prefixIcon: Icon(icon, color: mossGreen),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: const Color(0xFFF6F2DD), // Using the theme color
+        fillColor: const Color(0xFFF6F2DD),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,

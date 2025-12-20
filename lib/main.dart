@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Definining our specific Moss Green Palette
+    // Defining specific Moss Green Palette
     const Color mossGreen = Color(0xFF5B6739);
     const Color lightSage = Color(0xFFDDE2C9);
     const Color creamWhite = Color(0xFFF9F9F0);
@@ -50,7 +50,6 @@ class MyApp extends StatelessWidget {
         
         scaffoldBackgroundColor: lightSage,
 
-        // Corrected: CardThemeData instead of CardTheme 
         cardTheme: CardThemeData(
           color: creamWhite,
           elevation: 0,
@@ -79,18 +78,25 @@ class MyApp extends StatelessWidget {
         ),
       ),
       
-      // Auth State Check
+      // UPDATED: Auth State Check to prevent hanging/black screens
       home: StreamBuilder<fb_auth.User?>(
         stream: fb_auth.FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
+          // If we have user data, go to Dashboard immediately
+          if (snapshot.hasData) {
+            return const DashboardPage();
+          }
+          
+          // Only show loading if we are still waiting for the initial auth state
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
               backgroundColor: lightSage,
               body: Center(child: CircularProgressIndicator(color: mossGreen)),
             );
           }
-          // Returns Onboarding if not logged in, Dashboard if they are
-          return snapshot.hasData ? const DashboardPage() : const OnboardingPage();
+          
+          // Otherwise, return to Onboarding
+          return const OnboardingPage();
         },
       ),
       

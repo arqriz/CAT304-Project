@@ -1,25 +1,44 @@
-android {
-    // 1. Set the namespace to match your AndroidManifest.xml exactly
-    namespace = "com.example.regen" // Replace with your confirmed package name
+plugins {
+    id("com.android.application")
+    id("kotlin-android")
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id("dev.flutter.flutter-gradle-plugin")
+}
 
-    compileSdkVersion 34 // Use 34 for modern compatibility
+android {
+    namespace = "com.example.regen"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
 
     defaultConfig {
-        // 2. This must also match your package name
-        applicationId = "com.example.regen" 
-        
-        // 3. QR Scanner and Firebase need 21 or higher
-        minSdkVersion 23 
-        targetSdkVersion 34
-        
-        versionCode flutterVersionCode
-        versionName flutterVersionName
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId = "com.example.regen"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
     }
 
-    // Recommended for large projects with multiple plugins
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+flutter {
+    source = "../.."
 }

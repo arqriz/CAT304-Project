@@ -81,7 +81,7 @@ class _LogActivityPageState extends State<LogActivityPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // FIXED: Removed 'const' before TextStyle because mossGreen is a variable
-              Text(
+              const Text(
                 "What did you recycle?",
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: mossGreen),
               ),
@@ -100,7 +100,7 @@ class _LogActivityPageState extends State<LogActivityPage> {
                       return DropdownMenuItem<String>(
                         value: value,
                         // FIXED: Removed 'const' here
-                        child: Text(value, style: TextStyle(color: mossGreen)),
+                        child: Text(value, style: const TextStyle(color: mossGreen)),
                       );
                     }).toList(),
                     onChanged: (newValue) => setState(() => _selectedType = newValue!),
@@ -109,7 +109,7 @@ class _LogActivityPageState extends State<LogActivityPage> {
               ),
               const SizedBox(height: 25),
               // FIXED: Removed 'const' here
-              Text(
+              const Text(
                 "Quantity (kg)",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: mossGreen),
               ),

@@ -16,6 +16,7 @@ class User {
   final double co2Saved;
   final List<String> badges;
   final DateTime joinDate;
+  final bool isAdmin; // <--- ADD THIS
 
   User({
     required this.id,
@@ -31,9 +32,9 @@ class User {
     this.co2Saved = 0.0,
     this.badges = const [],
     required this.joinDate,
+    this.isAdmin = false, // <--- DEFAULT TO FALSE
   });
 
-  // Factory constructor to create a User from a Firestore DocumentSnapshot
   factory User.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     final joinDateTimestamp = data['joinDate'] as Timestamp?;
@@ -45,7 +46,6 @@ class User {
       matricNo: data['matricNo'] ?? '',
       faculty: data['faculty'] ?? '',
       residentialCollege: data['residentialCollege'] ?? '',
-      // Ensure data types are handled safely (Firestore integers often come as int)
       points: data['points'] is int ? data['points'] : (data['points'] ?? 0),
       level: data['level'] is int ? data['level'] : (data['level'] ?? 1),
       rank: data['rank'] ?? 'Novice Recycler',
@@ -53,10 +53,10 @@ class User {
       co2Saved: (data['co2Saved'] ?? 0.0).toDouble(),
       badges: List<String>.from(data['badges'] ?? []), 
       joinDate: joinDateTimestamp?.toDate() ?? DateTime.now(),
+      isAdmin: data['isAdmin'] ?? false, // <--- MAP THE FIELD
     );
   }
 
-  // Utility method to convert the User object to a map for Firestore upload
   Map<String, dynamic> toMap() {
     return {
       'name': name,
@@ -70,7 +70,8 @@ class User {
       'totalRecycled': totalRecycled,
       'co2Saved': co2Saved,
       'badges': badges,
-      'joinDate': joinDate, // Firestore handles DateTime automatically
+      'joinDate': joinDate,
+      'isAdmin': isAdmin, // <--- ADD TO MAP
     };
   }
 }

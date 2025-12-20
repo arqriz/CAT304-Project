@@ -1,3 +1,4 @@
+/*
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import '../services/activity_service.dart';
@@ -47,3 +48,4 @@ class _ScanQRPageState extends State<ScanQRPage> {
     super.dispose();
   }
 }
+*/
