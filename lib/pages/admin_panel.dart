@@ -13,16 +13,27 @@ class AdminPanel extends StatefulWidget {
 class _AdminPanelState extends State<AdminPanel> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   static const Color mossGreen = Color(0xFF5B6739);
-  
-  // Lighter UI Colors
   static const Color lightBackground = Color(0xFFFDFDF8); 
+  
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _targetController = TextEditingController();
+  final TextEditingController _rewardController = TextEditingController();
   String _searchQuery = "";
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    // Tab length increased to 3 to accommodate Quest Settings
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    _targetController.dispose();
+    _rewardController.dispose();
+    super.dispose();
   }
 
   // --- Logic: Edit User Points ---
@@ -96,12 +107,20 @@ class _AdminPanelState extends State<AdminPanel> with SingleTickerProviderStateM
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
-          tabs: const [Tab(text: "User Management"), Tab(text: "Community Logs")],
+          tabs: const [
+            Tab(text: "Users"),
+            Tab(text: "Logs"),
+            Tab(text: "Quest"),
+          ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [_buildUserTab(), _buildActivityTab()],
+        children: [
+          _buildUserTab(),
+          _buildActivityTab(),
+          _buildQuestSettingsTab(),
+        ],
       ),
     );
   }
@@ -202,7 +221,6 @@ class _AdminPanelState extends State<AdminPanel> with SingleTickerProviderStateM
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: () async {
-                    // Revert points when activity is deleted
                     await FirebaseFirestore.instance.collection('activities').doc(act.id).delete();
                     await FirebaseFirestore.instance.collection('users').doc(act.userId).update({
                       'points': FieldValue.increment(-act.pointsEarned),
@@ -212,6 +230,103 @@ class _AdminPanelState extends State<AdminPanel> with SingleTickerProviderStateM
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  // --- Tab 3: Quest Settings ---
+  Widget _buildQuestSettingsTab() {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('app_settings').doc('daily_quest').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+
+        // Update controllers with Firestore data if it exists
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          _targetController.text = data['target']?.toString() ?? "3";
+          _rewardController.text = data['reward']?.toString() ?? "50";
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Quest Configuration",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: mossGreen),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Adjust the difficulty and rewards for the daily recycling quest across all users.",
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+              const SizedBox(height: 30),
+              TextField(
+                controller: _targetController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Target Goal (Items)",
+                  hintText: "e.g., 3",
+                  prefixIcon: const Icon(Icons.track_changes, color: mossGreen),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _rewardController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Points Reward",
+                  hintText: "e.g., 50",
+                  prefixIcon: const Icon(Icons.card_giftcard, color: mossGreen),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 30),
+              SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: mossGreen,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
+                  ),
+                  onPressed: () async {
+                    try {
+                      final int target = int.parse(_targetController.text);
+                      final int reward = int.parse(_rewardController.text);
+
+                      await FirebaseFirestore.instance.collection('app_settings').doc('daily_quest').set({
+                        'target': target,
+                        'reward': reward,
+                        'updatedAt': FieldValue.serverTimestamp(),
+                      });
+
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Quest settings updated successfully!")),
+                        );
+                      }
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error: Please enter valid numbers. $e")),
+                      );
+                    }
+                  },
+                  child: const Text("SAVE SETTINGS", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
