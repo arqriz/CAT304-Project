@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/activity_model.dart';
-import '../services/activity_service.dart';
+import '../../models/activity_model.dart';
+import '../../services/activity_service.dart';
 
 class ActivitiesTab extends StatelessWidget {
   const ActivitiesTab({super.key});

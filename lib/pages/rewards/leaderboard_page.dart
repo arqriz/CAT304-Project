@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import '../models/user_model.dart';
+import '../../models/user_model.dart';
 
 class LeaderboardPage extends StatelessWidget {
   const LeaderboardPage({super.key});

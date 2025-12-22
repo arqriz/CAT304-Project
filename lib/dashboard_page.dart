@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'home_tab.dart';
-import 'activities_tab.dart';
-import 'leaderboard_page.dart';
-import 'profile_tab.dart';
-import 'rewards_tab.dart';
-import 'log_activity_page.dart';
-import 'admin_panel.dart'; // Import the new Admin Panel
+import 'pages/analytics/home_tab.dart';
+import 'pages/participation/activities_tab.dart';
+import 'pages/rewards/leaderboard_page.dart';
+import 'pages/authentication/profile_tab.dart';
+import 'pages/rewards/rewards_tab.dart';
+import 'pages/participation/log_activity_page.dart';
+import 'pages/admin/admin_panel.dart'; // Import the new Admin Panel
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});

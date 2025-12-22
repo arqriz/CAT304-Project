@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/user_model.dart';
-import '../models/activity_model.dart';
+import '../../models/user_model.dart';
+import '../../models/activity_model.dart';
 
 class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});

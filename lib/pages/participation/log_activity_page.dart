@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/activity_service.dart';
+import '../../services/activity_service.dart';
 
 class LogActivityPage extends StatefulWidget {
   const LogActivityPage({super.key});

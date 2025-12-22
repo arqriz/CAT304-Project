@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import '../models/user_model.dart';
-import '../models/activity_model.dart';
-import '../services/activity_service.dart';
-import 'log_activity_page.dart';
+import '../../models/user_model.dart';
+import '../../models/activity_model.dart';
+import '../../services/activity_service.dart';
+import '../participation/log_activity_page.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -403,11 +403,11 @@ class _HomeTabState extends State<HomeTab> {
         controller: _searchController,
         style: const TextStyle(color: Colors.white),
         onChanged: (val) => setState(() => _searchQuery = val),
-        decoration: InputDecoration(
+        decoration: const InputDecoration(
           hintText: "Search items...",
-          hintStyle: const TextStyle(color: Colors.white60),
+          hintStyle: TextStyle(color: Colors.white60),
           border: InputBorder.none,
-          icon: const Icon(Icons.search, color: Colors.white60),
+          icon: Icon(Icons.search, color: Colors.white60),
         ),
       ),
     );

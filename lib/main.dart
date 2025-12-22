@@ -5,11 +5,11 @@ import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'firebase_options.dart';
 
 // Pages
-import 'pages/dashboard_page.dart';
-import 'pages/onboarding_page.dart';
-import 'pages/login_page.dart';
-import 'pages/register_page.dart';
-import 'pages/log_activity_page.dart';
+import 'dashboard_page.dart';
+import 'pages/authentication/onboarding_page.dart';
+import 'pages/authentication/login_page.dart';
+import 'pages/authentication/register_page.dart';
+import 'pages/participation/log_activity_page.dart';
 import 'services/auth_service.dart';
 
 void main() async {

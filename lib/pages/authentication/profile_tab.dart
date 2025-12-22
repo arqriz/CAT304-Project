@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/auth_service.dart';
-import 'admin_panel.dart'; // Ensure this exists
+import '../../services/auth_service.dart';
+import '../admin/admin_panel.dart'; // Ensure this exists
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
