@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:ui';
 import '../../services/auth_service.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -13,25 +14,54 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
+
+  // Controllers for remaining text fields
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _matricController = TextEditingController();
-  final _facultyController = TextEditingController();
-  final _collegeController = TextEditingController();
+
+  // Dropdown Selections
+  String? _selectedFaculty;
+  String? _selectedCollege;
+
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  // --- UPDATED REGISTRATION LOGIC ---
+  // Premium Color Palette
+  static const Color forestDeep = Color(0xFF1B261B);
+  static const Color mossMain = Color(0xFF556B2F);
+  static const Color leafLight = Color(0xFFDDE4C1);
+
+  // Data Lists
+  final List<String> _faculties = [
+    'Computer Science',
+    'Biological Sciences',
+    'Chemical Sciences',
+    'Mathematical Sciences',
+    'Physics',
+    'Humanities',
+    'Social Sciences',
+    'Management',
+    'Arts',
+    'Educational Studies',
+  ];
+
+  final List<String> _colleges = [
+    'Aman Damai',
+    'Bakti Permai',
+    'Cahaya Gemilang',
+    'Fajar Harapan',
+    'Indah Kembara',
+    'Restu',
+    'Saujana',
+    'Tekun',
+  ];
+
   Future<void> _performRegister() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
     final authService = Provider.of<AuthService>(context, listen: false);
 
     try {
@@ -40,307 +70,337 @@ class _RegisterPageState extends State<RegisterPage> {
         _emailController.text.trim(),
         _passwordController.text.trim(),
         _matricController.text.trim(),
-        _facultyController.text.trim(),
-        _collegeController.text.trim(),
+        _selectedFaculty ?? '', // Using selection instead of controller
+        _selectedCollege ?? '', // Using selection instead of controller
       );
 
-      if (mounted) {
-        if (success) {
-          // SUCCESS: REMOVED manual Navigator call.
-          // The StreamBuilder in main.dart is listening to authStateChanges()
-          // and will automatically swap this screen for the DashboardPage.
-        } else {
-          // If the Firebase call failed (e.g., email already in use)
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registration failed. Email might be in use.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-          setState(() {
-            _isLoading = false;
-          });
-        }
+      if (mounted && !success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Registration failed.'),
+              backgroundColor: Colors.redAccent),
+        );
+        setState(() => _isLoading = false);
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("An unexpected error occurred: ${e.toString()}"),
-            backgroundColor: Colors.red,
-          ),
-        );
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
-  // --- END UPDATED REGISTRATION LOGIC ---
-
 
   @override
   Widget build(BuildContext context) {
-    const Color mossGreen = Color(0xFF556B2F);
-
     return Scaffold(
-      backgroundColor: const Color(0xFFD7DCC3),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(40),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Center(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 40),
-                      
-                      // Logo
-                      Container(
-                        height: 100,
-                        width: 100,
-                        decoration: BoxDecoration(
-                          color: mossGreen.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: mossGreen.withOpacity(0.2),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.eco_rounded,
-                          size: 50,
-                          color: mossGreen,
-                        ),
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      // Title
-                      const Text(
-                        "Join REGEN",
-                        style: TextStyle(
-                          fontSize: 36,
-                          color: mossGreen,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      const Text(
-                        "Start your gamified recycling journey today! 🌎",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Color(0xFF7A8F5A),
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      // Registration Form
-                      Form(
-                        key: _formKey,
-                        child: Column(
-                          children: [
-                            _buildTextFormField(_nameController, 'Full Name', Icons.person),
-                            const SizedBox(height: 16),
-                            _buildTextFormField(_matricController, 'Matric Number', Icons.credit_card),
-                            const SizedBox(height: 16),
-                            _buildTextFormField(_facultyController, 'Faculty/School', Icons.school),
-                            const SizedBox(height: 16),
-                            _buildTextFormField(_collegeController, 'Residential College', Icons.apartment),
-                            const SizedBox(height: 16),
-                            _buildTextFormField(_emailController, 'USM Email', Icons.email, 
-                                keyboardType: TextInputType.emailAddress, 
-                                validator: (value) {
-                                  if (value == null || value.isEmpty || !value.contains('@')) {
-                                    return 'Please enter a valid USM email';
-                                  }
-                                  if (!value.endsWith('@student.usm.my') && !value.endsWith('@usm.my')) {
-                                    return 'Please use a USM email address';
-                                  }
-                                  return null;
-                                }),
-                            const SizedBox(height: 16),
-                            _buildTextFormField(_passwordController, 'Password', Icons.lock, 
-                                obscureText: _obscurePassword,
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                    color: mossGreen,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                                ),
-                                validator: (value) => value!.length < 6 ? 'Password must be at least 6 characters' : null
-                            ),
-                            
-                            const SizedBox(height: 40),
-
-                            // Register Button
-                            SizedBox(
-                              width: double.infinity,
-                              height: 60,
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _performRegister,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: mossGreen,
-                                  foregroundColor: const Color(0xFFF6F2DD),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                  ),
-                                  elevation: 4,
-                                ),
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 3,
-                                        ),
-                                      )
-                                    : const Text(
-                                        "Register",
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                            
-                            const SizedBox(height: 30),
-
-                            // Already have account
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  "Already have an account? ",
-                                  style: TextStyle(
-                                    color: Color(0xFF7A8F5A),
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pushReplacementNamed(context, '/login');
-                                  },
-                                  child: const Text(
-                                    "Login",
-                                    style: TextStyle(
-                                      color: mossGreen,
-                                      fontWeight: FontWeight.bold,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-                            
-                            // Back to Onboarding
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.arrow_back,
-                                    size: 16,
-                                    color: mossGreen,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    "Back to Home",
-                                    style: TextStyle(
-                                      color: mossGreen,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 40),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          _buildBackgroundPainter(),
+          SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    _buildGlassCard(),
+                    const SizedBox(height: 20),
+                    _buildFooter(),
+                  ],
                 ),
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlassCard() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(40),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(40),
+            border: Border.all(color: Colors.white, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: forestDeep.withOpacity(0.1),
+                blurRadius: 30,
+                offset: const Offset(0, 15),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(28.0),
+          child: Column(
+            children: [
+              _buildIconHeader(),
+              const SizedBox(height: 20),
+              const Text(
+                "Join REGEN",
+                style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                    color: forestDeep,
+                    letterSpacing: -1.2),
+              ),
+              const SizedBox(height: 30),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _buildInput(
+                        _nameController, "Full Name", Icons.person_outline),
+                    _buildInput(_matricController, "Matric Number",
+                        Icons.badge_outlined),
+
+                    // Dropdown for Faculty
+                    _buildDropdown(
+                      label: "Select Faculty/School",
+                      icon: Icons.school_outlined,
+                      items: _faculties,
+                      value: _selectedFaculty,
+                      onChanged: (val) =>
+                          setState(() => _selectedFaculty = val),
+                    ),
+
+                    // Dropdown for College
+                    _buildDropdown(
+                      label: "Residential College",
+                      icon: Icons.apartment_outlined,
+                      items: _colleges,
+                      value: _selectedCollege,
+                      onChanged: (val) =>
+                          setState(() => _selectedCollege = val),
+                    ),
+
+                    _buildInput(_emailController, "USM Email",
+                        Icons.alternate_email_rounded),
+                    _buildInput(
+                      _passwordController,
+                      "Password",
+                      Icons.lock_open_rounded,
+                      isPass: true,
+                      suffix: IconButton(
+                        icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            color: mossMain),
+                        onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    _buildRegisterButton(),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // Helper for consistent text field styling
-  Widget _buildTextFormField(
-    TextEditingController controller, 
-    String label, 
-    IconData icon, 
-    {TextInputType keyboardType = TextInputType.text, bool obscureText = false, Widget? suffixIcon, String? Function(String?)? validator}) {
-    const Color mossGreen = Color(0xFF556B2F);
-    
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFF7A8F5A)),
-        prefixIcon: Icon(icon, color: mossGreen),
-        suffixIcon: suffixIcon,
-        filled: true,
-        fillColor: const Color(0xFFF6F2DD),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+  Widget _buildDropdown(
+      {required String label,
+      required IconData icon,
+      required List<String> items,
+      required String? value,
+      required ValueChanged<String?> onChanged}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: DropdownButtonFormField<String>(
+        value: value,
+        items: items
+            .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+            .toList(),
+        onChanged: onChanged,
+        validator: (v) => v == null ? 'Selection required' : null,
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon, color: mossMain, size: 22),
+          labelText: label,
+          labelStyle:
+              const TextStyle(color: forestDeep, fontWeight: FontWeight.w500),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.5),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.8)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: const BorderSide(color: mossMain, width: 2),
+          ),
+        ),
+        // Style for the dropdown menu itself
+        dropdownColor: Colors.white.withOpacity(0.95),
+        borderRadius: BorderRadius.circular(20),
+      ),
+    );
+  }
+
+  // --- UI Helpers (Icon, Background, Buttons etc remain the same) ---
+
+  Widget _buildIconHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: mossMain,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+              color: mossMain.withOpacity(0.4), blurRadius: 20, spreadRadius: 2)
+        ],
+      ),
+      child: const Icon(Icons.eco_rounded, size: 45, color: Colors.white),
+    );
+  }
+
+  Widget _buildBackgroundPainter() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [leafLight, Colors.white]),
+      ),
+      child: CustomPaint(painter: WavePainter()),
+    );
+  }
+
+  Widget _buildInput(TextEditingController ctrl, String label, IconData icon,
+      {bool isPass = false, Widget? suffix}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextFormField(
+        controller: ctrl,
+        obscureText: isPass ? _obscurePassword : false,
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon, color: mossMain, size: 22),
+          suffixIcon: suffix,
+          labelText: label,
+          labelStyle:
+              const TextStyle(color: forestDeep, fontWeight: FontWeight.w500),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.5),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.8)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: const BorderSide(color: mossMain, width: 2),
+          ),
         ),
       ),
-      keyboardType: keyboardType,
-      validator: validator ?? (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter your $label';
-        }
-        return null;
-      },
     );
+  }
+
+  Widget _buildRegisterButton() {
+    return Container(
+      width: double.infinity,
+      height: 64,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(colors: [mossMain, forestDeep]),
+        boxShadow: [
+          BoxShadow(
+              color: forestDeep.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8))
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _performRegister,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                    color: Colors.white, strokeWidth: 2.5))
+            : const Text("Create Account",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  Widget _buildFooter() {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text("Already a member? ",
+                style: TextStyle(color: forestDeep, fontSize: 15)),
+            GestureDetector(
+              onTap: () => Navigator.pushReplacementNamed(context, '/login'),
+              child: const Text("Login Now",
+                  style: TextStyle(
+                      color: mossMain,
+                      fontWeight: FontWeight.w800,
+                      decoration: TextDecoration.underline)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        TextButton.icon(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.keyboard_backspace_rounded,
+              size: 18, color: forestDeep),
+          label: const Text("Back to Start",
+              style: TextStyle(color: forestDeep, fontWeight: FontWeight.w600)),
+        ),
+      ],
+    );
+  }
+}
+
+class WavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..color = const Color(0xFF556B2F).withOpacity(0.15)
+      ..style = PaintingStyle.fill;
+    var path = Path();
+    path.moveTo(0, size.height * 0.3);
+    path.quadraticBezierTo(size.width * 0.25, size.height * 0.35,
+        size.width * 0.5, size.height * 0.3);
+    path.quadraticBezierTo(
+        size.width * 0.75, size.height * 0.25, size.width, size.height * 0.3);
+    path.lineTo(size.width, 0);
+    path.lineTo(0, 0);
+    canvas.drawPath(path, paint);
+
+    var paint2 = Paint()
+      ..color = const Color(0xFF556B2F).withOpacity(0.08)
+      ..style = PaintingStyle.fill;
+    var path2 = Path();
+    path2.moveTo(0, size.height * 0.35);
+    path2.quadraticBezierTo(size.width * 0.4, size.height * 0.4,
+        size.width * 0.7, size.height * 0.3);
+    path2.quadraticBezierTo(
+        size.width * 0.9, size.height * 0.2, size.width, size.height * 0.35);
+    path2.lineTo(size.width, 0);
+    path2.lineTo(0, 0);
+    canvas.drawPath(path2, paint2);
   }
 
   @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _matricController.dispose();
-    _facultyController.dispose();
-    _collegeController.dispose();
-    super.dispose();
-  }
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

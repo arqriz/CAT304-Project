@@ -37,9 +37,12 @@ class AuthService with ChangeNotifier {
   // UPDATED: Prevents black screen loops by allowing login even if profile fails
   Future<void> _fetchAndSetUser(String uid) async {
     try {
-      final doc = await _firestore.collection('users').doc(uid).get()
+      final doc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .get()
           .timeout(const Duration(seconds: 10));
-      
+
       if (doc.exists) {
         _currentUser = User.fromFirestore(doc);
         _isAuthenticated = true;
@@ -47,7 +50,7 @@ class AuthService with ChangeNotifier {
         // FIX: If Auth is logged in but doc is missing, stay on Dashboard
         // so the user isn't stuck on a black screen
         _currentUser = null;
-        _isAuthenticated = true; 
+        _isAuthenticated = true;
         if (kDebugMode) print('Warning: No Firestore document for user $uid');
       }
       notifyListeners();
@@ -72,14 +75,14 @@ class AuthService with ChangeNotifier {
   }
 
   // UPDATED: Added safety timeout for registration
-  Future<bool> register(String name, String email, String password, 
-                        String matricNo, String faculty, String college) async {
+  Future<bool> register(String name, String email, String password,
+      String matricNo, String faculty, String college) async {
     try {
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      
+
       if (userCredential.user != null) {
         final uid = userCredential.user!.uid;
         final newUser = User(
@@ -99,9 +102,12 @@ class AuthService with ChangeNotifier {
         );
 
         // Save to Firestore with a timeout to prevent long loading
-        await _firestore.collection('users').doc(uid).set(newUser.toMap())
+        await _firestore
+            .collection('users')
+            .doc(uid)
+            .set(newUser.toMap())
             .timeout(const Duration(seconds: 10));
-        
+
         _currentUser = newUser;
         _isAuthenticated = true;
         notifyListeners();
