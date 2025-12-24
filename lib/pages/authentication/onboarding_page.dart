@@ -1,6 +1,5 @@
 // lib/pages/authentication/onboarding_page.dart
 
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class OnboardingPage extends StatefulWidget {

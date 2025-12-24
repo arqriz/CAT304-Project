@@ -38,20 +38,29 @@ class _LoginPageState extends State<LoginPage>
         _passwordController.text.trim(),
       );
 
-      if (mounted && !success) {
-        _showErrorSnackBar("Login failed. Check credentials.");
+      if (mounted) {
+        if (success) {
+          // SUCCESS: Pop the login page to reveal the Dashboard underneath.
+          // We use pop() because the StreamBuilder in main.dart is already 
+          // switching the 'home' widget to DashboardPage.
+          Navigator.of(context).pop(); 
+        } else {
+          _showErrorSnackBar("Login failed. Check your credentials.");
+          setState(() => _isLoading = false);
+        }
       }
     } catch (e) {
-      _showErrorSnackBar("An unexpected error occurred.");
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        _showErrorSnackBar("An unexpected error occurred. Please try again.");
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: const TextStyle(color: Colors.white)),
+        content: Text(message, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(20),
@@ -65,7 +74,7 @@ class _LoginPageState extends State<LoginPage>
     return Scaffold(
       body: Stack(
         children: [
-          // 1. DYNAMIC GRADIENT & DEPTH BACKGROUND
+          // 1. DYNAMIC GRADIENT BACKGROUND
           Container(
             height: double.infinity,
             width: double.infinity,
@@ -77,7 +86,8 @@ class _LoginPageState extends State<LoginPage>
               ),
             ),
           ),
-          // Subtle "Glow" shapes for depth
+          
+          // Background Depth Shape
           Positioned(
             top: -50,
             left: -50,
@@ -94,11 +104,12 @@ class _LoginPageState extends State<LoginPage>
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // 2. ENTRANCE ANIMATION FOR LOGO
+                    // 2. LOGO WITH ENTRANCE ANIMATION
                     TweenAnimationBuilder(
                       duration: const Duration(milliseconds: 1000),
                       tween: Tween<double>(begin: 0, end: 1),
@@ -126,8 +137,8 @@ class _LoginPageState extends State<LoginPage>
                             borderRadius: BorderRadius.circular(45),
                             child: Image.asset(
                               'assets/images/first.png',
-                              height: 280,
-                              width: 280,
+                              height: 180, // Optimized size
+                              width: 180,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
                                   const Icon(Icons.eco_rounded,
@@ -137,9 +148,9 @@ class _LoginPageState extends State<LoginPage>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 50),
+                    const SizedBox(height: 40),
 
-                    // 3. ENTRANCE ANIMATION FOR LOGIN CARD
+                    // 3. LOGIN CARD WITH GLASS-MORPHISM EFFECT
                     TweenAnimationBuilder(
                       duration: const Duration(milliseconds: 1200),
                       tween: Tween<double>(begin: 0, end: 1),
@@ -188,16 +199,23 @@ class _LoginPageState extends State<LoginPage>
                                     ),
                                   ),
                                   const SizedBox(height: 35),
+                                  
+                                  // Email Field
                                   _buildTextField(
                                     controller: _emailController,
-                                    label: "Email Address",
+                                    label: "Student Email",
                                     icon: Icons.alternate_email_rounded,
-                                    validator: (val) =>
-                                        (val == null || !val.contains('@'))
-                                            ? 'Enter a valid email'
-                                            : null,
+                                    validator: (val) {
+                                      if (val == null || val.isEmpty) return 'Email is required';
+                                      if (!val.contains('@student.usm.my')) {
+                                        return 'Use @student.usm.my email';
+                                      }
+                                      return null;
+                                    },
                                   ),
                                   const SizedBox(height: 18),
+                                  
+                                  // Password Field
                                   _buildTextField(
                                     controller: _passwordController,
                                     label: "Password",
@@ -206,10 +224,12 @@ class _LoginPageState extends State<LoginPage>
                                     obscure: _obscurePassword,
                                     onToggleVisibility: () => setState(() =>
                                         _obscurePassword = !_obscurePassword),
+                                    validator: (val) => (val == null || val.isEmpty) 
+                                        ? 'Password is required' : null,
                                   ),
                                   const SizedBox(height: 40),
 
-                                  // INTERACTIVE BUTTON
+                                  // Sign In Button
                                   _buildAnimatedButton(context),
                                 ],
                               ),
@@ -220,7 +240,7 @@ class _LoginPageState extends State<LoginPage>
                     ),
                     const SizedBox(height: 40),
 
-                    // 4. REGISTRATION LINK
+                    // 4. REGISTER LINK
                     _buildRegisterLink(),
                     const SizedBox(height: 20),
                   ],
@@ -290,6 +310,7 @@ class _LoginPageState extends State<LoginPage>
               color: deepOlive,
               fontWeight: FontWeight.w800,
               fontSize: 15,
+              decoration: TextDecoration.underline,
             ),
           ),
         ),
@@ -343,6 +364,10 @@ class _LoginPageState extends State<LoginPage>
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 2),
         ),
       ),
     );

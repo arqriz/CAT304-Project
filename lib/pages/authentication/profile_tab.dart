@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../services/auth_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import '../../models/user_model.dart';
 import '../admin/admin_panel.dart';
 
 class ProfileTab extends StatelessWidget {
@@ -9,101 +10,115 @@ class ProfileTab extends StatelessWidget {
   // Updated Dynamic Green Palette
   static const Color forestDeep = Color(0xFF1B261B);
   static const Color mossMain = Color(0xFF556B2F);
-  static const Color sageBg =
-      Color(0xFFE8EDD1); // Soft attractive green background
-  static const Color leafCard = Color(0xFFF1F4E4); // Very light green for cards
+  static const Color sageBg = Color(0xFFE8EDD1); 
+  static const Color leafCard = Color(0xFFF1F4E4); 
   static const Color accentGold = Color(0xFFC5A358);
 
   @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context);
-    final user = authService.currentUser;
+    final String? uid = fb_auth.FirebaseAuth.instance.currentUser?.uid;
 
-    if (user == null) {
-      return const Center(child: CircularProgressIndicator(color: mossMain));
+    if (uid == null) {
+      return const Center(child: Text("Please log in again."));
     }
 
     return Scaffold(
-      backgroundColor: sageBg, // Full page background green
-      body: Stack(
-        children: [
-          // 1. Top Decorative Header with Depth
-          Container(
-            height: 240,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [forestDeep, mossMain],
+      backgroundColor: sageBg,
+      body: StreamBuilder<DocumentSnapshot>(
+        // Direct stream to the user document
+        stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+        builder: (context, snapshot) {
+          // 1. Handle Loading State
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: mossMain),
+            );
+          }
+
+          // 2. Handle Document Missing (Common right after Signup)
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return _buildLoadingOrErrorState(context, "Finalizing your profile...");
+          }
+
+          // 3. Handle Errors (e.g., Permission Denied)
+          if (snapshot.hasError) {
+            return _buildErrorState(context, "Permission Denied. Check Rules.");
+          }
+
+          final user = User.fromFirestore(snapshot.data!);
+          final Map<String, dynamic> rawData = snapshot.data!.data() as Map<String, dynamic>;
+          final bool isAdmin = rawData['isAdmin'] ?? false;
+
+          return Stack(
+            children: [
+              // Top Decorative Header
+              Container(
+                height: 240,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [forestDeep, mossMain],
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(60),
+                    bottomRight: Radius.circular(60),
+                  ),
+                ),
               ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(60),
-                bottomRight: Radius.circular(60),
-              ),
-            ),
-          ),
 
-          // 2. Main Content
-          SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  const SizedBox(height: 70),
-
-                  // --- Identity Header ---
-                  _buildHeaderCard(user),
-
-                  const SizedBox(height: 25),
-
-                  // --- Admin Action (If applicable) ---
-                  if (user.isAdmin) _buildPremiumAdminTile(context),
-
-                  const SizedBox(height: 30),
-
-                  // --- Section Title ---
-                  Row(
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
                     children: [
-                      const Icon(Icons.eco, color: mossMain, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Student Details",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: forestDeep.withOpacity(0.8),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                      const SizedBox(height: 70),
+                      _buildHeaderCard(user, isAdmin),
+                      const SizedBox(height: 25),
+                      if (isAdmin) _buildPremiumAdminTile(context),
+                      const SizedBox(height: 30),
+                      _buildSectionLabel("Student Details"),
+                      const SizedBox(height: 16),
+                      _buildInfoGrid(user),
+                      const SizedBox(height: 40),
+                      _buildLogoutButton(context),
+                      const SizedBox(height: 120),
                     ],
                   ),
-                  const SizedBox(height: 16),
-
-                  // --- Info Grid ---
-                  _buildInfoGrid(user),
-
-                  const SizedBox(height: 40),
-
-                  // --- Logout Action ---
-                  _buildLogoutButton(context, authService),
-
-                  const SizedBox(height: 120),
-                ],
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildHeaderCard(user) {
+  Widget _buildSectionLabel(String text) {
+    return Row(
+      children: [
+        const Icon(Icons.eco, color: mossMain, size: 20),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: forestDeep.withOpacity(0.8),
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeaderCard(User user, bool isAdmin) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: leafCard, // Light Green Card
+        color: leafCard,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
@@ -115,7 +130,6 @@ class ProfileTab extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Profile Avatar with Gold Accent
           Stack(
             alignment: Alignment.bottomRight,
             children: [
@@ -123,9 +137,8 @@ class ProfileTab extends StatelessWidget {
                 radius: 50,
                 backgroundColor: forestDeep,
                 child: Text(
-                  user.name.substring(0, 1).toUpperCase(),
-                  style: const TextStyle(
-                      fontSize: 40, color: sageBg, fontWeight: FontWeight.bold),
+                  user.name.isNotEmpty ? user.name.substring(0, 1).toUpperCase() : "?",
+                  style: const TextStyle(fontSize: 40, color: sageBg, fontWeight: FontWeight.bold),
                 ),
               ),
               const CircleAvatar(
@@ -139,35 +152,19 @@ class ProfileTab extends StatelessWidget {
           Text(
             user.name,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-              color: forestDeep,
-              letterSpacing: -0.5,
-            ),
+            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: forestDeep),
           ),
           const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                user.email,
-                style: TextStyle(
-                    color: mossMain.withOpacity(0.7),
-                    fontWeight: FontWeight.w500),
-              ),
-              if (user.isAdmin) ...[
-                const SizedBox(width: 6),
-                const Icon(Icons.verified, color: Colors.blueAccent, size: 18),
-              ]
-            ],
+          Text(
+            user.email,
+            style: TextStyle(color: mossMain.withOpacity(0.7), fontWeight: FontWeight.w500),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoGrid(user) {
+  Widget _buildInfoGrid(User user) {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -190,31 +187,15 @@ class ProfileTab extends StatelessWidget {
       decoration: BoxDecoration(
         color: leafCard,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-                color: mossMain.withOpacity(0.1), shape: BoxShape.circle),
-            child: Icon(icon, color: mossMain, size: 18),
-          ),
+          Icon(icon, color: mossMain, size: 18),
           const Spacer(),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 10,
-                  color: mossMain.withOpacity(0.6),
-                  fontWeight: FontWeight.bold)),
+          Text(label, style: TextStyle(fontSize: 10, color: mossMain.withOpacity(0.6), fontWeight: FontWeight.bold)),
           const SizedBox(height: 2),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: forestDeep, fontSize: 14),
-          ),
+          Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, color: forestDeep, fontSize: 13)),
         ],
       ),
     );
@@ -223,51 +204,66 @@ class ProfileTab extends StatelessWidget {
   Widget _buildPremiumAdminTile(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-            colors: [Color(0xFF8B0000), Color(0xFFD32F2F)]),
+        gradient: const LinearGradient(colors: [Color(0xFF8B0000), Color(0xFFD32F2F)]),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.red.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 6))
-        ],
       ),
       child: ListTile(
-        leading: const CircleAvatar(
-            backgroundColor: Colors.white24,
-            child: Icon(Icons.settings, color: Colors.white)),
-        title: const Text('Admin Dashboard',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        leading: const Icon(Icons.admin_panel_settings, color: Colors.white),
+        title: const Text('Admin Dashboard', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         trailing: const Icon(Icons.chevron_right, color: Colors.white),
-        onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (context) => const AdminPanel())),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminPanel())),
       ),
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context, AuthService authService) {
+  Widget _buildLogoutButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      child: TextButton.icon(
-        onPressed: () {
-          authService.logout();
-          Navigator.of(context)
-              .pushNamedAndRemoveUntil('/login', (route) => false);
+      child: OutlinedButton.icon(
+        onPressed: () async {
+          await fb_auth.FirebaseAuth.instance.signOut();
+          if (context.mounted) {
+            Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+          }
         },
-        icon: const Icon(Icons.power_settings_new, color: Colors.redAccent),
-        label: const Text("Sign Out ",
-            style: TextStyle(
-                color: Colors.redAccent,
-                fontWeight: FontWeight.bold,
-                fontSize: 16)),
-        style: TextButton.styleFrom(
+        icon: const Icon(Icons.logout, color: Colors.redAccent),
+        label: const Text("Sign Out", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+        style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 18),
-          backgroundColor: Colors.redAccent.withOpacity(0.05),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: Colors.redAccent, width: 1.2)),
+          side: const BorderSide(color: Colors.redAccent),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingOrErrorState(BuildContext context, String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(color: mossMain),
+          const SizedBox(height: 20),
+          Text(message, style: const TextStyle(color: mossMain)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 60, color: Colors.redAccent),
+          const SizedBox(height: 16),
+          Text(message, style: const TextStyle(color: Colors.redAccent)),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () => fb_auth.FirebaseAuth.instance.signOut(),
+            child: const Text("Logout & Try Again"),
+          )
+        ],
       ),
     );
   }

@@ -1,4 +1,4 @@
-// lib/pages/register_page.dart
+// lib/pages/authentication/register_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +15,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers for remaining text fields
+  // Controllers for text fields
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -70,20 +70,36 @@ class _RegisterPageState extends State<RegisterPage> {
         _emailController.text.trim(),
         _passwordController.text.trim(),
         _matricController.text.trim(),
-        _selectedFaculty ?? '', // Using selection instead of controller
-        _selectedCollege ?? '', // Using selection instead of controller
+        _selectedFaculty ?? '',
+        _selectedCollege ?? '',
       );
 
-      if (mounted && !success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Registration failed.'),
-              backgroundColor: Colors.redAccent),
-        );
-        setState(() => _isLoading = false);
+      if (mounted) {
+        if (success) {
+          // Success: Navigate to login immediately
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Registration successful! Please login.'),
+                backgroundColor: mossMain),
+          );
+          Navigator.pushReplacementNamed(context, '/login');
+        } else {
+          // Failure: Stop loading and show error
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Registration failed. Email might already be in use.'),
+                backgroundColor: Colors.redAccent),
+          );
+          setState(() => _isLoading = false);
+        }
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.redAccent),
+        );
+      }
     }
   }
 
@@ -98,8 +114,7 @@ class _RegisterPageState extends State<RegisterPage> {
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                 child: Column(
                   children: [
                     const SizedBox(height: 20),
@@ -152,46 +167,37 @@ class _RegisterPageState extends State<RegisterPage> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    _buildInput(
-                        _nameController, "Full Name", Icons.person_outline),
-                    _buildInput(_matricController, "Matric Number",
-                        Icons.badge_outlined),
-
-                    // Dropdown for Faculty
+                    _buildInput(_nameController, "Full Name", Icons.person_outline),
+                    _buildInput(_matricController, "Matric Number", Icons.badge_outlined),
                     _buildDropdown(
                       label: "Select Faculty/School",
                       icon: Icons.school_outlined,
                       items: _faculties,
                       value: _selectedFaculty,
-                      onChanged: (val) =>
-                          setState(() => _selectedFaculty = val),
+                      onChanged: (val) => setState(() => _selectedFaculty = val),
                     ),
-
-                    // Dropdown for College
                     _buildDropdown(
                       label: "Residential College",
                       icon: Icons.apartment_outlined,
                       items: _colleges,
                       value: _selectedCollege,
-                      onChanged: (val) =>
-                          setState(() => _selectedCollege = val),
+                      onChanged: (val) => setState(() => _selectedCollege = val),
                     ),
-
-                    _buildInput(_emailController, "USM Email",
-                        Icons.alternate_email_rounded),
+                    _buildInput(_emailController, "USM Email", Icons.alternate_email_rounded, 
+                      validator: (val) => (val != null && !val.contains('@student.usm.my')) ? 'Must be USM email' : null),
                     _buildInput(
                       _passwordController,
                       "Password",
                       Icons.lock_open_rounded,
                       isPass: true,
+                      validator: (val) => (val != null && val.length < 6) ? 'Min 6 characters' : null,
                       suffix: IconButton(
                         icon: Icon(
                             _obscurePassword
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
                             color: mossMain),
-                        onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                     const SizedBox(height: 30),
@@ -206,26 +212,25 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _buildDropdown(
-      {required String label,
-      required IconData icon,
-      required List<String> items,
-      required String? value,
-      required ValueChanged<String?> onChanged}) {
+  Widget _buildDropdown({
+    required String label,
+    required IconData icon,
+    required List<String> items,
+    required String? value,
+    required ValueChanged<String?> onChanged}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: DropdownButtonFormField<String>(
         value: value,
         items: items
-            .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+            .map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 14))))
             .toList(),
         onChanged: onChanged,
         validator: (v) => v == null ? 'Selection required' : null,
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: mossMain, size: 22),
           labelText: label,
-          labelStyle:
-              const TextStyle(color: forestDeep, fontWeight: FontWeight.w500),
+          labelStyle: const TextStyle(color: forestDeep, fontWeight: FontWeight.w500),
           filled: true,
           fillColor: Colors.white.withOpacity(0.5),
           enabledBorder: OutlineInputBorder(
@@ -236,15 +241,20 @@ class _RegisterPageState extends State<RegisterPage> {
             borderRadius: BorderRadius.circular(20),
             borderSide: const BorderSide(color: mossMain, width: 2),
           ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: const BorderSide(color: Colors.redAccent),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+          ),
         ),
-        // Style for the dropdown menu itself
         dropdownColor: Colors.white.withOpacity(0.95),
         borderRadius: BorderRadius.circular(20),
       ),
     );
   }
-
-  // --- UI Helpers (Icon, Background, Buttons etc remain the same) ---
 
   Widget _buildIconHeader() {
     return Container(
@@ -253,8 +263,7 @@ class _RegisterPageState extends State<RegisterPage> {
         color: mossMain,
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(
-              color: mossMain.withOpacity(0.4), blurRadius: 20, spreadRadius: 2)
+          BoxShadow(color: mossMain.withOpacity(0.4), blurRadius: 20, spreadRadius: 2)
         ],
       ),
       child: const Icon(Icons.eco_rounded, size: 45, color: Colors.white),
@@ -276,18 +285,18 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildInput(TextEditingController ctrl, String label, IconData icon,
-      {bool isPass = false, Widget? suffix}) {
+      {bool isPass = false, Widget? suffix, String? Function(String?)? validator}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: TextFormField(
         controller: ctrl,
         obscureText: isPass ? _obscurePassword : false,
+        validator: validator ?? (val) => (val == null || val.isEmpty) ? 'Required' : null,
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: mossMain, size: 22),
           suffixIcon: suffix,
           labelText: label,
-          labelStyle:
-              const TextStyle(color: forestDeep, fontWeight: FontWeight.w500),
+          labelStyle: const TextStyle(color: forestDeep, fontWeight: FontWeight.w500),
           filled: true,
           fillColor: Colors.white.withOpacity(0.5),
           enabledBorder: OutlineInputBorder(
@@ -297,6 +306,10 @@ class _RegisterPageState extends State<RegisterPage> {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20),
             borderSide: const BorderSide(color: mossMain, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: const BorderSide(color: Colors.redAccent),
           ),
         ),
       ),
@@ -311,10 +324,7 @@ class _RegisterPageState extends State<RegisterPage> {
         borderRadius: BorderRadius.circular(22),
         gradient: const LinearGradient(colors: [mossMain, forestDeep]),
         boxShadow: [
-          BoxShadow(
-              color: forestDeep.withOpacity(0.3),
-              blurRadius: 15,
-              offset: const Offset(0, 8))
+          BoxShadow(color: forestDeep.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))
         ],
       ),
       child: ElevatedButton(
@@ -322,20 +332,15 @@ class _RegisterPageState extends State<RegisterPage> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         ),
         child: _isLoading
             ? const SizedBox(
                 height: 24,
                 width: 24,
-                child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2.5))
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
             : const Text("Create Account",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -346,25 +351,19 @@ class _RegisterPageState extends State<RegisterPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text("Already a member? ",
-                style: TextStyle(color: forestDeep, fontSize: 15)),
+            const Text("Already a member? ", style: TextStyle(color: forestDeep, fontSize: 15)),
             GestureDetector(
               onTap: () => Navigator.pushReplacementNamed(context, '/login'),
               child: const Text("Login Now",
-                  style: TextStyle(
-                      color: mossMain,
-                      fontWeight: FontWeight.w800,
-                      decoration: TextDecoration.underline)),
+                  style: TextStyle(color: mossMain, fontWeight: FontWeight.w800, decoration: TextDecoration.underline)),
             ),
           ],
         ),
         const SizedBox(height: 10),
         TextButton.icon(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.keyboard_backspace_rounded,
-              size: 18, color: forestDeep),
-          label: const Text("Back to Start",
-              style: TextStyle(color: forestDeep, fontWeight: FontWeight.w600)),
+          icon: const Icon(Icons.keyboard_backspace_rounded, size: 18, color: forestDeep),
+          label: const Text("Back to Start", style: TextStyle(color: forestDeep, fontWeight: FontWeight.w600)),
         ),
       ],
     );
@@ -374,33 +373,14 @@ class _RegisterPageState extends State<RegisterPage> {
 class WavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    var paint = Paint()
-      ..color = const Color(0xFF556B2F).withOpacity(0.15)
-      ..style = PaintingStyle.fill;
+    var paint = Paint()..color = const Color(0xFF556B2F).withOpacity(0.15)..style = PaintingStyle.fill;
     var path = Path();
     path.moveTo(0, size.height * 0.3);
-    path.quadraticBezierTo(size.width * 0.25, size.height * 0.35,
-        size.width * 0.5, size.height * 0.3);
-    path.quadraticBezierTo(
-        size.width * 0.75, size.height * 0.25, size.width, size.height * 0.3);
-    path.lineTo(size.width, 0);
-    path.lineTo(0, 0);
+    path.quadraticBezierTo(size.width * 0.25, size.height * 0.35, size.width * 0.5, size.height * 0.3);
+    path.quadraticBezierTo(size.width * 0.75, size.height * 0.25, size.width, size.height * 0.3);
+    path.lineTo(size.width, 0); path.lineTo(0, 0);
     canvas.drawPath(path, paint);
-
-    var paint2 = Paint()
-      ..color = const Color(0xFF556B2F).withOpacity(0.08)
-      ..style = PaintingStyle.fill;
-    var path2 = Path();
-    path2.moveTo(0, size.height * 0.35);
-    path2.quadraticBezierTo(size.width * 0.4, size.height * 0.4,
-        size.width * 0.7, size.height * 0.3);
-    path2.quadraticBezierTo(
-        size.width * 0.9, size.height * 0.2, size.width, size.height * 0.35);
-    path2.lineTo(size.width, 0);
-    path2.lineTo(0, 0);
-    canvas.drawPath(path2, paint2);
   }
-
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

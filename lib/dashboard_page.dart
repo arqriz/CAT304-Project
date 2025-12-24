@@ -7,7 +7,7 @@ import 'pages/rewards/leaderboard_page.dart';
 import 'pages/authentication/profile_tab.dart';
 import 'pages/rewards/rewards_tab.dart';
 import 'pages/participation/log_activity_page.dart';
-import 'pages/admin/admin_panel.dart'; // Import the new Admin Panel
+import 'pages/admin/admin_panel.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -17,6 +17,10 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedIndex = 0;
+
+  // Modern Moss Green Palette
+  static const Color mossGreen = Color(0xFF5B6739);
+  static const Color creamWhite = Color(0xFFF9F9F0);
 
   final List<Widget> _tabs = [
     const HomeTab(),
@@ -28,25 +32,34 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    const Color mossGreen = Color(0xFF5B6739); 
     final String? uid = fb_auth.FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
-        title: const Text("EcoImpact", style: TextStyle(color: mossGreen, fontWeight: FontWeight.bold)),
+        title: const Text(
+          "EcoImpact", 
+          style: TextStyle(color: mossGreen, fontWeight: FontWeight.bold)
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          // StreamBuilder checks for admin status in real-time
+          // UPDATED: Safe StreamBuilder with explicit null checks
           StreamBuilder<DocumentSnapshot>(
             stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
             builder: (context, snapshot) {
-              if (snapshot.hasData && (snapshot.data!.data() as Map<String, dynamic>)['isAdmin'] == true) {
-                return IconButton(
-                  icon: const Icon(Icons.admin_panel_settings_rounded, color: mossGreen),
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (c) => const AdminPanel())),
-                );
+              // Check if data exists and contains 'isAdmin' safely
+              if (snapshot.hasData && snapshot.data!.exists) {
+                final data = snapshot.data!.data() as Map<String, dynamic>?;
+                if (data != null && data['isAdmin'] == true) {
+                  return IconButton(
+                    icon: const Icon(Icons.admin_panel_settings_rounded, color: mossGreen),
+                    onPressed: () => Navigator.push(
+                      context, 
+                      MaterialPageRoute(builder: (c) => const AdminPanel())
+                    ),
+                  );
+                }
               }
               return const SizedBox();
             },

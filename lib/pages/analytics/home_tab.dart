@@ -87,8 +87,36 @@ class _HomeTabState extends State<HomeTab> {
           return const Center(child: CircularProgressIndicator(color: mossGreen));
         }
 
+        // FIX: Improved handling for missing Firestore documents
         if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-          return const Center(child: Text("User data not found"));
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.person_off_rounded, size: 80, color: mossGreen),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Profile Not Found",
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: mossGreen),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "We found your login, but your user profile hasn't been created in our database yet.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                    onPressed: () => fb_auth.FirebaseAuth.instance.signOut(),
+                    style: ElevatedButton.styleFrom(backgroundColor: mossGreen),
+                    child: const Text("Log Out & Try Registering", style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
 
         final user = User.fromFirestore(userSnapshot.data!);
@@ -106,7 +134,6 @@ class _HomeTabState extends State<HomeTab> {
 
               if (_searchQuery.isEmpty) ...[
                 _buildSectionHeader("Daily Quest"),
-                // UPDATED: Now passing UID to calculate real-time progress using Admin settings
                 _buildFunctionalQuest(uid!, alreadyClaimed), 
 
                 _buildSectionHeader("Your Digital Tree"),
@@ -152,6 +179,8 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
+  // --- WIDGET HELPER METHODS ---
+
   Widget _buildFunctionalQuest(String userId, bool alreadyClaimed) {
     final now = DateTime.now();
     final todayStart = DateTime(now.year, now.month, now.day);
@@ -159,7 +188,6 @@ class _HomeTabState extends State<HomeTab> {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance.collection('app_settings').doc('daily_quest').snapshots(),
       builder: (context, settingsSnapshot) {
-        // Default values if settings haven't been set by Admin yet
         int target = 3;
         int rewardAmount = 50;
 
@@ -243,9 +271,7 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   Widget _buildDigitalTree(int points) {
-    
     IconData treeIcon = points < 100 ? Icons.grass : (points < 500 ? Icons.spa : Icons.park);
-    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 25),
       padding: const EdgeInsets.all(20),
@@ -279,7 +305,6 @@ class _HomeTabState extends State<HomeTab> {
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox();
-        
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 25),
           padding: const EdgeInsets.all(16),
